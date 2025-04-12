@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Battle Arena</title>
+    <!-- Include Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .battle-animation {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .victory-animation {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .hp-bar {
+            transition: width 0.8s ease;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .pokemon-list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pokemon-list-item {
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .pokemon-list-item:hover {
+            transform: scale(1.05);
+            background-color: #f9fafb;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-5px) rotate(-1deg);
+            }
+
+            40%,
+            80% {
+                transform: translateX(5px) rotate(1deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Attack animations */
+        .attack-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+        }
+
+        /* Make sure the attack container is large enough */
+        .attack-container img,
+        .attack-container div {
+            width: 80%;
+            height: 80%;
+        }
+
+        /* Fire attack animation */
+        .fire-attack {
+            animation: fire-animation 1s forwards;
+        }
+
+        @keyframes fire-animation {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1.5);
+            }
+        }
+
+        /* Water attack animation */
+        .water-attack {
+            animation: water-animation 1s forwards;
+        }
+
+        @keyframes water-animation {
+            0% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+        }
+
+        /* Electric attack animation */
+        .electric-attack {
+            animation: electric-animation 0.8s forwards;
+        }
+
+        @keyframes electric-animation {
+            0% {
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.8;
+            }
+
+            20% {
+                opacity: 0.2;
+            }
+
+            30% {
+                opacity: 1;
+            }
+
+            40% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            60% {
+                opacity: 0.2;
+            }
+
+            70% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Grass attack animation */
+        .grass-attack {
+            animation: grass-animation 1s forwards;
+        }
+
+        @keyframes grass-animation {
+            0% {
+                opacity: 0;
+                transform: rotate(0deg) scale(0.5);
+            }
+
+            50% {
+                opacity: 1;
+                transform: rotate(180deg) scale(1.2);
+            }
+
+            100% {
+                opacity: 0;
+                transform: rotate(360deg) scale(1.5);
+            }
+        }
+
+        /* Normal attack animation */
+        .normal-attack {
+            animation: normal-animation 0.7s forwards;
+        }
+
+        @keyframes normal-animation {
+            0% {
+                opacity: 0;
+                transform: scale(0.2);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.2);
+            }
+        }
+
+        /* Psychic attack animation */
+        .psychic-attack {
+            animation: psychic-animation 1s forwards;
+        }
+
+        @keyframes psychic-animation {
+            0% {
+                opacity: 0;
+                transform: scale(1) rotate(0deg);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.5) rotate(180deg);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1) rotate(360deg);
+            }
+        }
+
+        /* Fighting attack animation */
+        .fighting-attack {
+            animation: fighting-animation 0.5s forwards;
+        }
+
+        @keyframes fighting-animation {
+            0% {
+                opacity: 0;
+                transform: translateX(-50px) translateY(-50px);
+            }
+
+            25% {
+                opacity: 1;
+                transform: translateX(50px) translateY(50px);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(-50px) translateY(50px);
+            }
+
+            75% {
+                opacity: 1;
+                transform: translateX(50px) translateY(-50px);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(0) translateY(0);
+            }
+        }
+
+        /* Ice attack animation */
+        .ice-attack {
+            animation: ice-animation 1s forwards;
+        }
+
+        @keyframes ice-animation {
+            0% {
+                opacity: 0;
+                transform: scale(1.5);
+                filter: blur(10px);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1);
+                filter: blur(0px);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.5);
+                filter: blur(5px);
+            }
+        }
+
+        /* Ghost attack animation */
+        .ghost-attack {
+            animation: ghost-animation 1.2s forwards;
+        }
+
+        @keyframes ghost-animation {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) translateY(0);
+            }
+
+            25% {
+                opacity: 0.5;
+                transform: scale(1) translateY(-20px);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.2) translateY(0);
+            }
+
+            75% {
+                opacity: 0.5;
+                transform: scale(1) translateY(20px);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.5) translateY(0);
+            }
+        }
+
+        /* Dragon attack animation */
+        .dragon-attack {
+            animation: dragon-animation 1s forwards;
+        }
+
+        @keyframes dragon-animation {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotate(0deg);
+            }
+
+            25% {
+                opacity: 0.8;
+                transform: scale(1.2) rotate(90deg);
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(0.8) rotate(180deg);
+            }
+
+            75% {
+                opacity: 0.8;
+                transform: scale(1.2) rotate(270deg);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.5) rotate(360deg);
+            }
+        }
+
+        /* Poison attack animation */
+        .poison-attack {
+            animation: poison-animation 1s forwards;
+        }
+
+        @keyframes poison-animation {
+            0% {
+                opacity: 0;
+                filter: blur(8px);
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 0.7;
+                filter: blur(0px);
+                transform: scale(1.1);
+            }
+
+            100% {
+                opacity: 0;
+                filter: blur(10px);
+                transform: scale(1.3);
+            }
+        }
+
+        /* Fairy attack animation */
+        .fairy-attack {
+            animation: fairy-animation 1.2s forwards;
+        }
+
+        @keyframes fairy-animation {
+            0% {
+                opacity: 0;
+                transform: scale(0.2) rotate(0deg);
+            }
+
+            25% {
+                opacity: 0.5;
+                transform: scale(0.6) rotate(90deg);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1) rotate(180deg);
+            }
+
+            75% {
+                opacity: 0.5;
+                transform: scale(0.6) rotate(270deg);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.2) rotate(360deg);
+            }
+        }
+
+        /* Ground attack animation */
+        .ground-attack {
+            animation: ground-animation 1s forwards;
+        }
+
+        @keyframes ground-animation {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            25% {
+                opacity: 0.8;
+                transform: translateY(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+
+            75% {
+                opacity: 0.7;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    'sans': ['Helvetica', 'Arial', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        'pokemon-normal': '#A8A77A',
+                        'pokemon-fire': '#EE8130',
+                        'pokemon-water': '#6390F0',
+                        'pokemon-grass': '#7AC74C',
+                        'pokemon-electric': '#F7D02C',
+                        'pokemon-ice': '#96D9D6',
+                        'pokemon-fighting': '#C22E28',
+                        'pokemon-poison': '#A33EA1',
+                        'pokemon-ground': '#E2BF65',
+                        'pokemon-flying': '#A98FF3',
+                        'pokemon-psychic': '#F95587',
+                        'pokemon-bug': '#A6B91A',
+                        'pokemon-rock': '#B6A136',
+                        'pokemon-ghost': '#735797',
+                        'pokemon-dark': '#705746',
+                        'pokemon-dragon': '#6F35FC',
+                        'pokemon-steel': '#B7B7CE',
+                        'pokemon-fairy': '#D685AD',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-red-600 p-6 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-white">Pokémon Battle Arena</h1>
+            <a href="index.html"
+                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-md text-white font-medium transition">
+                Back to List
+            </a>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <div class="mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Select Your Pokémon</h2>
+                <p class="mb-4 text-gray-600">Choose two Pokémon to battle against each other!</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- First Pokémon Selection -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-bold text-lg mb-2">First Pokémon</h3>
+                        <div class="mb-4">
+                            <label for="pokemon1Search" class="block text-sm font-medium text-gray-700 mb-1">Search
+                                Pokémon</label>
+                            <div class="flex">
+                                <input type="text" id="pokemon1Search" name="pokemon1Search"
+                                    placeholder="Enter name or ID"
+                                    class="px-4 py-2 border border-gray-300 rounded-l-md flex-1 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <button id="search1Btn"
+                                    class="bg-red-600 text-white px-4 py-2 rounded-r-md hover:bg-red-700 transition">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Or select from list:</span>
+                            <button id="showPokemonList1Btn" class="text-sm text-red-600 hover:text-red-800">
+                                Show Pokémon List
+                            </button>
+                        </div>
+                        <div id="pokemon1Display"
+                            class="text-center bg-gray-50 p-4 rounded-lg min-h-40 flex flex-col items-center justify-center">
+                            <p class="text-gray-500">No Pokémon selected</p>
+                        </div>
+                    </div>
+
+                    <!-- Second Pokémon Selection -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-bold text-lg mb-2">Second Pokémon</h3>
+                        <div class="mb-4">
+                            <label for="pokemon2Search" class="block text-sm font-medium text-gray-700 mb-1">Search
+                                Pokémon</label>
+                            <div class="flex">
+                                <input type="text" id="pokemon2Search" name="pokemon2Search"
+                                    placeholder="Enter name or ID"
+                                    class="px-4 py-2 border border-gray-300 rounded-l-md flex-1 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <button id="search2Btn"
+                                    class="bg-red-600 text-white px-4 py-2 rounded-r-md hover:bg-red-700 transition">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Or select from list:</span>
+                            <button id="showPokemonList2Btn" class="text-sm text-red-600 hover:text-red-800">
+                                Show Pokémon List
+                            </button>
+                        </div>
+                        <div id="pokemon2Display"
+                            class="text-center bg-gray-50 p-4 rounded-lg min-h-40 flex flex-col items-center justify-center">
+                            <p class="text-gray-500">No Pokémon selected</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button id="startBattleBtn"
+                        class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                        Start Battle!
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battle Arena -->
+        <div id="battleArena" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Battle Arena</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <!-- First Pokémon Battle Stats -->
+                    <div id="pokemon1Battle" class="flex flex-col items-center">
+                        <div id="pokemon1Image" class="w-40 h-40 md:w-48 md:h-48 relative">
+                            <img src="" alt="" class="w-full h-full object-contain">
+                            <!-- Attack effect container for Pokémon 1 -->
+                        </div>
+                        <h3 id="pokemon1Name" class="text-lg font-bold capitalize mt-2"></h3>
+                        <div class="w-full mt-2">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span>HP</span>
+                                <span id="pokemon1HP">100/100</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div id="pokemon1HPBar" class="hp-bar bg-green-500 h-3 rounded-full"
+                                    style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div id="pokemon1Types" class="mt-2 flex gap-1"></div>
+                    </div>
+
+                    <!-- VS Symbol -->
+                    <div class="hidden md:flex justify-center items-center">
+                        <div class="text-5xl font-bold text-red-600">VS</div>
+                    </div>
+
+                    <!-- Second Pokémon Battle Stats -->
+                    <div id="pokemon2Battle" class="flex flex-col items-center">
+                        <div id="pokemon2Image" class="w-40 h-40 md:w-48 md:h-48 relative">
+                            <img src="" alt="" class="w-full h-full object-contain">
+                            <!-- Attack effect container for Pokémon 2 -->
+
+                        </div>
+                        <h3 id="pokemon2Name" class="text-lg font-bold capitalize mt-2"></h3>
+                        <div class="w-full mt-2">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span>HP</span>
+                                <span id="pokemon2HP">100/100</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div id="pokemon2HPBar" class="hp-bar bg-green-500 h-3 rounded-full"
+                                    style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div id="pokemon2Types" class="mt-2 flex gap-1"></div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="font-bold mb-2">Battle Log</h3>
+                    <div id="battleLog" class="bg-gray-50 p-4 rounded-lg h-48 overflow-y-auto space-y-2">
+                        <p class="text-gray-500 italic">The battle will begin soon...</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-center gap-4">
+                    <button id="attackBtn"
+                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                        Attack
+                    </button>
+                    <button id="resetBattleBtn"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
+                        Reset Battle
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="attack1Effect" class="attack-container"></div>
+
+        <div id="attack2Effect" class="attack-container"></div>
+        <!-- Battle Results -->
+        <div id="battleResults" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <h2 class="text-2xl font-bold mb-4">Battle Results</h2>
+                <div id="winnerDisplay" class="mb-6"></div>
+                <div class="flex justify-center gap-4">
+                    <button id="newBattleBtn"
+                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                        New Battle
+                    </button>
+                    <a href="index.html"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
+                        Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pokémon Selection Modal -->
+    <div id="pokemonListModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold" id="modalTitle">Select a Pokémon</h2>
+                <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+            </div>
+            <div class="mb-4">
+                <input type="text" id="modalSearchInput" class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="Filter Pokémon...">
+            </div>
+            <div class="mb-4 flex justify-between items-center">
+                <button id="modalPrevBtn"
+                    class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Previous</button>
+                <span id="modalPageInfo">Page 1</span>
+                <button id="modalNextBtn" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Next</button>
+            </div>
+            <div id="pokemonListGrid" class="pokemon-list-grid">
+                <!-- Pokémon items will be inserted here -->
+                <div class="col-span-full text-center p-4">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600">
+                    </div>
+                    <p class="mt-2">Loading Pokémon...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Pokémon API module -->
+    <script type="module">
+        import { getPokemonDetails, getPokemons } from './pokemon.js';
+
+        // DOM Elements - Selection
+        const pokemon1Search = document.getElementById('pokemon1Search');
+        const pokemon2Search = document.getElementById('pokemon2Search');
+        const search1Btn = document.getElementById('search1Btn');
+        const search2Btn = document.getElementById('search2Btn');
+        const pokemon1Display = document.getElementById('pokemon1Display');
+        const pokemon2Display = document.getElementById('pokemon2Display');
+        const startBattleBtn = document.getElementById('startBattleBtn');
+        const showPokemonList1Btn = document.getElementById('showPokemonList1Btn');
+        const showPokemonList2Btn = document.getElementById('showPokemonList2Btn');
+
+        // DOM Elements - Modal
+        const pokemonListModal = document.getElementById('pokemonListModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalSearchInput = document.getElementById('modalSearchInput');
+        const modalPrevBtn = document.getElementById('modalPrevBtn');
+        const modalNextBtn = document.getElementById('modalNextBtn');
+        const modalPageInfo = document.getElementById('modalPageInfo');
+        const pokemonListGrid = document.getElementById('pokemonListGrid');
+
+        // DOM Elements - Battle
+        const battleArena = document.getElementById('battleArena');
+        const pokemon1Image = document.getElementById('pokemon1Image');
+        const pokemon2Image = document.getElementById('pokemon2Image');
+        const pokemon1Name = document.getElementById('pokemon1Name');
+        const pokemon2Name = document.getElementById('pokemon2Name');
+        const pokemon1HP = document.getElementById('pokemon1HP');
+        const pokemon2HP = document.getElementById('pokemon2HP');
+        const pokemon1HPBar = document.getElementById('pokemon1HPBar');
+        const pokemon2HPBar = document.getElementById('pokemon2HPBar');
+        const pokemon1Types = document.getElementById('pokemon1Types');
+        const pokemon2Types = document.getElementById('pokemon2Types');
+        const battleLog = document.getElementById('battleLog');
+        const attackBtn = document.getElementById('attackBtn');
+        const resetBattleBtn = document.getElementById('resetBattleBtn');
+        const attack1Effect = document.getElementById('attack1Effect');
+        const attack2Effect = document.getElementById('attack2Effect');
+
+        // DOM Elements - Results
+        const battleResults = document.getElementById('battleResults');
+        const winnerDisplay = document.getElementById('winnerDisplay');
+        const newBattleBtn = document.getElementById('newBattleBtn');
+
+        // Battle Data
+        let selectedPokemon1 = null;
+        let selectedPokemon2 = null;
+        let battleData = {
+            pokemon1: null,
+            pokemon2: null,
+            turn: 1,
+            isGameOver: false
+        };
+
+        // Type effectiveness chart
+        const typeEffectiveness = {
+            normal: { rock: 0.5, ghost: 0, steel: 0.5 },
+            fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
+            water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
+            electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
+            grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
+            ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
+            fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, dark: 2, steel: 2, fairy: 0.5 },
+            poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
+            ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
+            flying: { electric: 0.5, grass: 2, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
+            psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
+            bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
+            rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
+            ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
+            dragon: { dragon: 2, steel: 0.5, fairy: 0 },
+            dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
+            steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
+            fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
+        };
+
+        // Event Listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            search1Btn.addEventListener('click', () => searchPokemon(pokemon1Search.value, 1));
+            search2Btn.addEventListener('click', () => searchPokemon(pokemon2Search.value, 2));
+            pokemon1Search.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') searchPokemon(pokemon1Search.value, 1);
+            });
+            pokemon2Search.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') searchPokemon(pokemon2Search.value, 2);
+            });
+            startBattleBtn.addEventListener('click', startBattle);
+            attackBtn.addEventListener('click', performAttack);
+            resetBattleBtn.addEventListener('click', resetBattle);
+            newBattleBtn.addEventListener('click', () => {
+                battleResults.classList.add('hidden');
+                resetSelection();
+            });
+
+            // Pokemon list modal event listeners
+            showPokemonList1Btn.addEventListener('click', () => openPokemonListModal(1));
+            showPokemonList2Btn.addEventListener('click', () => openPokemonListModal(2));
+            closeModalBtn.addEventListener('click', closePokemonListModal);
+            modalPrevBtn.addEventListener('click', showPreviousPage);
+            modalNextBtn.addEventListener('click', showNextPage);
+            modalSearchInput.addEventListener('input', filterPokemonList);
+        });
+
+        // Search for Pokémon
+        async function searchPokemon(query, playerNumber) {
+            if (!query.trim()) return;
+
+            const displayEl = playerNumber === 1 ? pokemon1Display : pokemon2Display;
+
+            try {
+                displayEl.innerHTML = '<div class="text-center p-4"><div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div><p class="mt-2">Searching...</p></div>';
+
+                const pokemon = await getPokemonDetails(query.toLowerCase());
+
+                if (playerNumber === 1) {
+                    selectedPokemon1 = pokemon;
+                } else {
+                    selectedPokemon2 = pokemon;
+                }
+
+                displayPokemon(pokemon, displayEl);
+                checkBattleReady();
+            } catch (error) {
+                displayEl.innerHTML = `<p class="text-red-500">Pokémon not found. Try again.</p>`;
+                if (playerNumber === 1) {
+                    selectedPokemon1 = null;
+                } else {
+                    selectedPokemon2 = null;
+                }
+                checkBattleReady();
+            }
+        }
+
+        // Display selected Pokémon
+        function displayPokemon(pokemon, element) {
+            const types = pokemon.types.map(type =>
+                `<span class="inline-block px-2 py-1 text-xs text-white bg-pokemon-${type.type.name} rounded-full">${type.type.name}</span>`
+            ).join(' ');
+
+            element.innerHTML = `
+                <img src="${pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default}" 
+                     alt="${pokemon.name}" 
+                     class="w-28 h-28 mx-auto">
+                <h3 class="mt-2 text-lg font-semibold capitalize">${pokemon.name}</h3>
+                <p class="text-gray-500 text-sm">ID: #${pokemon.id.toString().padStart(3, '0')}</p>
+                <div class="mt-2 flex justify-center gap-1 flex-wrap">
+                    ${types}
+                </div>
+            `;
+        }
+
+        // Check if both Pokémon are selected and ready for battle
+        function checkBattleReady() {
+            if (selectedPokemon1 && selectedPokemon2) {
+                startBattleBtn.disabled = false;
+            } else {
+                startBattleBtn.disabled = true;
+            }
+        }
+
+        // Start the battle
+        function startBattle() {
+            if (!selectedPokemon1 || !selectedPokemon2) return;
+
+            // Initialize battle data
+            battleData = {
+                pokemon1: {
+                    ...selectedPokemon1,
+                    currentHP: 100,
+                    maxHP: 100
+                },
+                pokemon2: {
+                    ...selectedPokemon2,
+                    currentHP: 100,
+                    maxHP: 100
+                },
+                turn: 1,
+                isGameOver: false
+            };
+
+            // Display battle arena
+            battleArena.classList.remove('hidden');
+
+            // Hide selection area
+            document.querySelector('.mb-8').classList.add('hidden');
+
+            // Setup battle display
+            setupBattleDisplay();
+
+            // Add initial battle log
+            addToBattleLog(`Battle between ${selectedPokemon1.name} and ${selectedPokemon2.name} is starting!`);
+            addToBattleLog(`${selectedPokemon1.name} goes first!`);
+        }
+
+        // Setup the battle display
+        function setupBattleDisplay() {
+            // Setup Pokemon 1
+            pokemon1Image.innerHTML = `<img src="${battleData.pokemon1.sprites.other['official-artwork'].front_default || battleData.pokemon1.sprites.front_default}" 
+                                           alt="${battleData.pokemon1.name}" 
+                                           class="w-full h-full object-contain">`;
+            pokemon1Name.textContent = battleData.pokemon1.name;
+            pokemon1HP.textContent = `${battleData.pokemon1.currentHP}/${battleData.pokemon1.maxHP}`;
+            pokemon1HPBar.style.width = '100%';
+
+            // Setup Pokemon 2
+            pokemon2Image.innerHTML = `<img src="${battleData.pokemon2.sprites.other['official-artwork'].front_default || battleData.pokemon2.sprites.front_default}" 
+                                           alt="${battleData.pokemon2.name}" 
+                                           class="w-full h-full object-contain">`;
+            pokemon2Name.textContent = battleData.pokemon2.name;
+            pokemon2HP.textContent = `${battleData.pokemon2.currentHP}/${battleData.pokemon2.maxHP}`;
+            pokemon2HPBar.style.width = '100%';
+
+            // Setup types
+            pokemon1Types.innerHTML = battleData.pokemon1.types.map(type =>
+                `<span class="inline-block px-2 py-1 text-xs text-white bg-pokemon-${type.type.name} rounded-full">${type.type.name}</span>`
+            ).join('');
+
+            pokemon2Types.innerHTML = battleData.pokemon2.types.map(type =>
+                `<span class="inline-block px-2 py-1 text-xs text-white bg-pokemon-${type.type.name} rounded-full">${type.type.name}</span>`
+            ).join('');
+        }
+
+        // Add message to battle log
+        function addToBattleLog(message) {
+            const logEntry = document.createElement('p');
+            logEntry.textContent = message;
+            battleLog.appendChild(logEntry);
+            battleLog.scrollTop = battleLog.scrollHeight; // Auto-scroll to bottom
+        }
+
+        // Calculate damage multiplier based on type effectiveness
+        function calculateTypeEffectiveness(attackType, defenderTypes) {
+            let multiplier = 1;
+
+            defenderTypes.forEach(defType => {
+                const defTypeName = defType.type.name;
+                const effectiveness = typeEffectiveness[attackType]?.[defTypeName] || 1;
+                multiplier *= effectiveness;
+            });
+
+            return multiplier;
+        }
+
+        // Calculate attack damage
+        function calculateDamage(attacker, defender) {
+            // Base damage calculation using attack and defense stats
+            const attackStat = attacker.stats.find(stat => stat.stat.name === 'attack')?.base_stat || 50;
+            const defenseStat = defender.stats.find(stat => stat.stat.name === 'defense')?.base_stat || 50;
+
+            // Calculate base damage
+            let damage = (attackStat / defenseStat) * 20;
+
+            // Apply random factor (0.85 to 1.15)
+            const randomFactor = 0.85 + (Math.random() * 0.3);
+            damage *= randomFactor;
+
+            // Apply STAB (Same Type Attack Bonus)
+            const attackType = attacker.types[0].type.name;
+            if (attacker.types.some(type => type.type.name === attackType)) {
+                damage *= 1.5;
+            }
+
+            // Apply type effectiveness
+            const typeMultiplier = calculateTypeEffectiveness(attackType, defender.types);
+            damage *= typeMultiplier;
+
+            // Round damage
+            damage = Math.round(damage);
+
+            // Ensure minimum damage
+            damage = Math.max(1, damage);
+
+            return { damage, typeMultiplier };
+        }
+
+        // Get thematic attack animation based on type
+        function getAttackAnimation(type) {
+            const attackAnimations = {
+                'fire': {
+                    class: 'fire-attack',
+                    html: `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/fire-stone.png" 
+                            alt="Fire attack" class="w-full h-full object-contain filter blur-sm">`
+                },
+                'water': {
+                    class: 'water-attack',
+                    html: `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/water-stone.png" 
+                            alt="Water attack" class="w-full h-full object-contain filter blur-sm">`
+                },
+                'grass': {
+                    class: 'grass-attack',
+                    html: `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/leaf-stone.png" 
+                            alt="Grass attack" class="w-full h-full object-contain"`
+                },
+                'electric': {
+                    class: 'electric-attack',
+                    html: `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/thunder-stone.png" 
+                            alt="Electric attack" class="w-full h-full object-contain filter brightness-150">`
+                },
+                'ice': {
+                    class: 'ice-attack',
+                    html: `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ice-stone.png" 
+                            alt="Ice attack" class="w-full h-full object-contain filter brightness-125">`
+                },
+                'fighting': {
+                    class: 'fighting-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-fighting w-12 h-12 rounded-full"></div>
+                           </div>`
+                },
+                'poison': {
+                    class: 'poison-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-poison w-16 h-16 rounded-full filter blur-sm"></div>
+                           </div>`
+                },
+                'ground': {
+                    class: 'ground-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-ground w-24 h-8 rounded-md transform rotate-45"></div>
+                           </div>`
+                },
+                'flying': {
+                    class: 'ice-attack', // Reuse ice animation
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-flying w-24 h-24 rounded-full filter blur-md opacity-80"></div>
+                           </div>`
+                },
+                'psychic': {
+                    class: 'psychic-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-psychic w-20 h-20 rounded-full filter blur-md"></div>
+                           </div>`
+                },
+                'bug': {
+                    class: 'grass-attack', // Reuse grass animation
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-bug w-12 h-12 rounded-full"></div>
+                           </div>`
+                },
+                'rock': {
+                    class: 'normal-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-rock w-16 h-16 rounded-md transform rotate-45"></div>
+                           </div>`
+                },
+                'ghost': {
+                    class: 'ghost-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-ghost w-16 h-20 rounded-full filter blur-md opacity-70"></div>
+                           </div>`
+                },
+                'dragon': {
+                    class: 'dragon-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-dragon w-24 h-24 transform rotate-45 filter blur-sm"></div>
+                           </div>`
+                },
+                'dark': {
+                    class: 'ghost-attack', // Reuse ghost animation
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-dark w-20 h-20 rounded-full filter blur-md"></div>
+                           </div>`
+                },
+                'steel': {
+                    class: 'normal-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-steel w-16 h-16 rounded-full"></div>
+                           </div>`
+                },
+                'fairy': {
+                    class: 'fairy-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-fairy w-12 h-12 rounded-full filter brightness-125"></div>
+                           </div>`
+                },
+                'normal': {
+                    class: 'normal-attack',
+                    html: `<div class="w-full h-full flex items-center justify-center">
+                              <div class="bg-pokemon-normal w-16 h-16 rounded-full"></div>
+                           </div>`
+                }
+            };
+
+            return attackAnimations[type] || attackAnimations['normal'];
+        }
+
+        // Play attack animation
+        function playAttackAnimation(attackerType, targetElement) {
+            const animation = getAttackAnimation(attackerType);
+
+            // Add a temporary background color to the body to confirm animation is triggered
+            document.body.style.backgroundColor = '#ffe8e8';
+            setTimeout(() => {
+                document.body.style.backgroundColor = '';
+            }, 1000);
+
+            // Clear any previous animation classes
+            targetElement.classList.remove('fire-attack', 'water-attack', 'grass-attack', 'electric-attack',
+                'normal-attack', 'fighting-attack', 'poison-attack', 'ground-attack',
+                'flying-attack', 'psychic-attack', 'bug-attack', 'rock-attack',
+                'ghost-attack', 'dragon-attack', 'dark-attack', 'steel-attack',
+                'fairy-attack', 'ice-attack');
+
+            // Set the content and make it visible
+            targetElement.innerHTML = animation.html;
+            targetElement.style.opacity = '1';
+
+            // Force a reflow before adding the animation class
+            void targetElement.offsetWidth;
+
+            // Add the animation class
+            targetElement.classList.add(animation.class);
+
+            // Reset animation after it completes
+            setTimeout(() => {
+                targetElement.classList.remove(animation.class);
+                targetElement.style.opacity = '0';
+                targetElement.innerHTML = '';
+            }, 1000);
+
+            // Log confirmation to console
+            console.log('Attack animation played:', attackerType);
+        }
+
+        // Perform attack action
+        function performAttack() {
+            if (battleData.isGameOver) return;
+
+            const isPlayer1Turn = battleData.turn % 2 === 1;
+            const attacker = isPlayer1Turn ? battleData.pokemon1 : battleData.pokemon2;
+            const defender = isPlayer1Turn ? battleData.pokemon2 : battleData.pokemon1;
+            const attackerEl = isPlayer1Turn ? pokemon1Image : pokemon2Image;
+            const defenderEl = isPlayer1Turn ? pokemon2Image : pokemon1Image;
+            const targetEffectEl = isPlayer1Turn ? attack2Effect : attack1Effect;
+
+            // Calculate damage
+            const { damage, typeMultiplier } = calculateDamage(attacker, defender);
+
+            // Get attacker's primary type
+            const attackerType = attacker.types[0].type.name;
+
+            // Play thematic attack animation on target
+            playAttackAnimation(attackerType, targetEffectEl);
+
+            // Apply damage animation
+            attackerEl.classList.add('battle-animation');
+            setTimeout(() => {
+                attackerEl.classList.remove('battle-animation');
+                defenderEl.classList.add('battle-animation');
+                setTimeout(() => {
+                    defenderEl.classList.remove('battle-animation');
+                }, 500);
+            }, 500);
+
+            // Apply damage
+            defender.currentHP = Math.max(0, defender.currentHP - damage);
+
+            // Update HP display
+            updateHealthDisplay(!isPlayer1Turn);
+
+            // Log the attack
+            let attackMessage = `${attacker.name} uses ${attackerType}-type attack on ${defender.name} for ${damage} damage!`;
+            if (typeMultiplier > 1) {
+                attackMessage += " It's super effective!";
+            } else if (typeMultiplier < 1 && typeMultiplier > 0) {
+                attackMessage += " It's not very effective...";
+            } else if (typeMultiplier === 0) {
+                attackMessage += " It has no effect!";
+            }
+            addToBattleLog(attackMessage);
+
+            // Check for battle end
+            if (defender.currentHP <= 0) {
+                endBattle(attacker, defender);
+            } else {
+                // Next turn
+                battleData.turn++;
+                addToBattleLog(`Turn ${battleData.turn}: ${battleData.turn % 2 === 1 ? battleData.pokemon1.name : battleData.pokemon2.name}'s turn.`);
+            }
+        }
+
+        // Update health display
+        function updateHealthDisplay(isPlayer1) {
+            const pokemon = isPlayer1 ? battleData.pokemon1 : battleData.pokemon2;
+            const hpDisplay = isPlayer1 ? pokemon1HP : pokemon2HP;
+            const hpBar = isPlayer1 ? pokemon1HPBar : pokemon2HPBar;
+
+            hpDisplay.textContent = `${pokemon.currentHP}/${pokemon.maxHP}`;
+            const hpPercentage = (pokemon.currentHP / pokemon.maxHP) * 100;
+            hpBar.style.width = `${hpPercentage}%`;
+
+            // Change HP bar color based on remaining HP
+            if (hpPercentage <= 20) {
+                hpBar.classList.remove('bg-yellow-500', 'bg-green-500');
+                hpBar.classList.add('bg-red-500');
+            } else if (hpPercentage <= 50) {
+                hpBar.classList.remove('bg-green-500', 'bg-red-500');
+                hpBar.classList.add('bg-yellow-500');
+            }
+        }
+
+        // End battle and show results
+        function endBattle(winner, loser) {
+            battleData.isGameOver = true;
+
+            // Log the end of battle
+            addToBattleLog(`${loser.name} fainted!`);
+            addToBattleLog(`${winner.name} wins the battle!`);
+
+            // Show victory animation
+            const winnerEl = winner === battleData.pokemon1 ? pokemon1Image : pokemon2Image;
+            winnerEl.classList.add('victory-animation');
+
+            // Update attack button
+            attackBtn.disabled = true;
+
+            // Show results after a brief delay
+            setTimeout(() => {
+                battleArena.classList.add('hidden');
+                battleResults.classList.remove('hidden');
+
+                winnerDisplay.innerHTML = `
+                    <div class="flex flex-col items-center">
+                        <img src="${winner.sprites.other['official-artwork'].front_default || winner.sprites.front_default}" 
+                             alt="${winner.name}" 
+                             class="w-40 h-40">
+                        <h3 class="text-xl font-bold mt-2 capitalize">${winner.name} wins!</h3>
+                        <div class="flex mt-2">
+                            ${winner.types.map(type =>
+                    `<span class="inline-block px-3 py-1 mx-1 text-sm text-white bg-pokemon-${type.type.name} rounded-full">${type.type.name}</span>`
+                ).join('')}
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // Reset battle to pick new Pokémon
+        function resetBattle() {
+            battleArena.classList.add('hidden');
+            document.querySelector('.mb-8').classList.remove('hidden');
+            battleLog.innerHTML = '<p class="text-gray-500 italic">The battle will begin soon...</p>';
+            attackBtn.disabled = false;
+
+            // Reset animations
+            pokemon1Image.classList.remove('victory-animation', 'battle-animation');
+            pokemon2Image.classList.remove('victory-animation', 'battle-animation');
+
+            // Reset HP bars
+            pokemon1HPBar.style.width = '100%';
+            pokemon2HPBar.style.width = '100%';
+            pokemon1HPBar.classList.remove('bg-red-500', 'bg-yellow-500');
+            pokemon2HPBar.classList.remove('bg-red-500', 'bg-yellow-500');
+            pokemon1HPBar.classList.add('bg-green-500');
+            pokemon2HPBar.classList.add('bg-green-500');
+
+            // Clear any attack animations
+            attack1Effect.classList.remove('fire-attack', 'water-attack', 'grass-attack', 'electric-attack',
+                'normal-attack', 'fighting-attack', 'poison-attack', 'ground-attack',
+                'flying-attack', 'psychic-attack', 'bug-attack', 'rock-attack',
+                'ghost-attack', 'dragon-attack', 'dark-attack', 'steel-attack',
+                'fairy-attack', 'ice-attack');
+            attack2Effect.classList.remove('fire-attack', 'water-attack', 'grass-attack', 'electric-attack',
+                'normal-attack', 'fighting-attack', 'poison-attack', 'ground-attack',
+                'flying-attack', 'psychic-attack', 'bug-attack', 'rock-attack',
+                'ghost-attack', 'dragon-attack', 'dark-attack', 'steel-attack',
+                'fairy-attack', 'ice-attack');
+            attack1Effect.style.opacity = 0;
+            attack2Effect.style.opacity = 0;
+            attack1Effect.innerHTML = '';
+            attack2Effect.innerHTML = '';
+        }
+
+        // Reset Pokémon selection
+        function resetSelection() {
+            selectedPokemon1 = null;
+            selectedPokemon2 = null;
+            pokemon1Display.innerHTML = '<p class="text-gray-500">No Pokémon selected</p>';
+            pokemon2Display.innerHTML = '<p class="text-gray-500">No Pokémon selected</p>';
+            pokemon1Search.value = '';
+            pokemon2Search.value = '';
+            startBattleBtn.disabled = true;
+            document.querySelector('.mb-8').classList.remove('hidden');
+        }
+
+        // Modal variables
+        let currentModalPage = 1;
+        const MODAL_PAGE_SIZE = 20;
+        let currentTargetPlayer = 1;
+        let currentModalPokemonList = [];
+        let totalModalPages = 0;
+        let filteredPokemonList = [];
+
+        // Open Pokemon list modal
+        async function openPokemonListModal(playerNumber) {
+            currentTargetPlayer = playerNumber;
+            modalTitle.textContent = `Select ${playerNumber === 1 ? 'First' : 'Second'} Pokémon`;
+            pokemonListModal.style.display = 'block';
+            modalSearchInput.value = '';
+
+            // Reset pagination
+            currentModalPage = 1;
+
+            // Load Pokémon list
+            await loadPokemonListForModal();
+        }
+
+        // Close Pokemon list modal
+        function closePokemonListModal() {
+            pokemonListModal.style.display = 'none';
+        }
+
+        // Load Pokémon list for modal
+        async function loadPokemonListForModal() {
+            try {
+                pokemonListGrid.innerHTML = '<div class="col-span-full text-center p-4"><div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div><p class="mt-2">Loading Pokémon...</p></div>';
+
+                const offset = (currentModalPage - 1) * MODAL_PAGE_SIZE;
+                const data = await getPokemons(MODAL_PAGE_SIZE, offset);
+
+                currentModalPokemonList = data.results;
+                filteredPokemonList = [...currentModalPokemonList];
+                totalModalPages = Math.ceil(data.count / MODAL_PAGE_SIZE);
+
+                updateModalPageInfo();
+                await renderPokemonListInModal(filteredPokemonList);
+            } catch (error) {
+                pokemonListGrid.innerHTML = `<div class="col-span-full text-center p-4 text-red-500">Error loading Pokémon: ${error.message}</div>`;
+            }
+        }
+
+        // Render Pokémon list in modal
+        async function renderPokemonListInModal(pokemonList) {
+            if (!pokemonList || pokemonList.length === 0) {
+                pokemonListGrid.innerHTML = '<div class="col-span-full text-center p-4">No Pokémon found</div>';
+                return;
+            }
+
+            const pokemonDetailsPromises = pokemonList.map(pokemon => {
+                const pokemonId = pokemon.url.split('/').filter(Boolean).pop();
+                return getPokemonDetails(pokemonId);
+            });
+
+            try {
+                const pokemonDetailsArray = await Promise.all(pokemonDetailsPromises);
+
+                let html = '';
+                pokemonDetailsArray.forEach(pokemon => {
+                    html += `
+                        <div class="pokemon-list-item" data-id="${pokemon.id}">
+                            <img src="${pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default}" 
+                                 alt="${pokemon.name}" 
+                                 class="w-20 h-20 mx-auto">
+                            <p class="mt-1 capitalize font-medium">${pokemon.name}</p>
+                            <p class="text-xs text-gray-500">#${pokemon.id.toString().padStart(3, '0')}</p>
+                        </div>
+                    `;
+                });
+
+                pokemonListGrid.innerHTML = html;
+
+                // Add event listeners to Pokemon items
+                document.querySelectorAll('.pokemon-list-item').forEach(item => {
+                    item.addEventListener('click', () => selectPokemonFromList(item.dataset.id));
+                });
+            } catch (error) {
+                pokemonListGrid.innerHTML = `<div class="col-span-full text-center p-4 text-red-500">Error rendering Pokémon: ${error.message}</div>`;
+            }
+        }
+
+        // Filter Pokémon list based on search input
+        function filterPokemonList() {
+            const searchTerm = modalSearchInput.value.trim().toLowerCase();
+
+            if (!searchTerm) {
+                filteredPokemonList = [...currentModalPokemonList];
+                renderPokemonListInModal(filteredPokemonList);
+                return;
+            }
+
+            filteredPokemonList = currentModalPokemonList.filter(pokemon =>
+                pokemon.name.includes(searchTerm) ||
+                pokemon.url.split('/').filter(Boolean).pop().toString() === searchTerm
+            );
+
+            renderPokemonListInModal(filteredPokemonList);
+        }
+
+        // Update modal page info
+        function updateModalPageInfo() {
+            modalPageInfo.textContent = `Page ${currentModalPage} of ${totalModalPages || 1}`;
+            modalPrevBtn.disabled = currentModalPage <= 1;
+            modalNextBtn.disabled = currentModalPage >= totalModalPages;
+        }
+
+        // Show previous page of Pokémon
+        function showPreviousPage() {
+            if (currentModalPage > 1) {
+                currentModalPage--;
+                loadPokemonListForModal();
+            }
+        }
+
+        // Show next page of Pokémon
+        function showNextPage() {
+            if (currentModalPage < totalModalPages) {
+                currentModalPage++;
+                loadPokemonListForModal();
+            }
+        }
+
+        // Select Pokémon from list
+        async function selectPokemonFromList(pokemonId) {
+            try {
+                const pokemon = await getPokemonDetails(pokemonId);
+
+                if (currentTargetPlayer === 1) {
+                    selectedPokemon1 = pokemon;
+                    displayPokemon(pokemon, pokemon1Display);
+                } else {
+                    selectedPokemon2 = pokemon;
+                    displayPokemon(pokemon, pokemon2Display);
+                }
+
+                checkBattleReady();
+                closePokemonListModal();
+            } catch (error) {
+                console.error('Error selecting Pokémon:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>

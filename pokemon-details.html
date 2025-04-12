@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Details</title>
+    <!-- Include Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+
+        .evolution-arrow {
+            position: relative;
+            width: 50px;
+            height: 30px;
+        }
+
+        .evolution-arrow::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            transform: translateY(-50%);
+        }
+
+        .evolution-arrow::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            border-width: 8px 0 8px 12px;
+            border-style: solid;
+            border-color: transparent transparent transparent currentColor;
+            transform: translateY(-50%);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    'sans': ['Helvetica', 'Arial', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        'pokemon-normal': '#A8A77A',
+                        'pokemon-fire': '#EE8130',
+                        'pokemon-water': '#6390F0',
+                        'pokemon-grass': '#7AC74C',
+                        'pokemon-electric': '#F7D02C',
+                        'pokemon-ice': '#96D9D6',
+                        'pokemon-fighting': '#C22E28',
+                        'pokemon-poison': '#A33EA1',
+                        'pokemon-ground': '#E2BF65',
+                        'pokemon-flying': '#A98FF3',
+                        'pokemon-psychic': '#F95587',
+                        'pokemon-bug': '#A6B91A',
+                        'pokemon-rock': '#B6A136',
+                        'pokemon-ghost': '#735797',
+                        'pokemon-dark': '#705746',
+                        'pokemon-dragon': '#6F35FC',
+                        'pokemon-steel': '#B7B7CE',
+                        'pokemon-fairy': '#D685AD',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 min-h-screen theme-transition" id="mainBody">
+    <header id="mainHeader" class="bg-red-600 p-6 shadow-md theme-transition">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-white">Pokémon Explorer</h1>
+            <a href="index.html"
+                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-md text-white font-medium transition">
+                Back to List
+            </a>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <div id="loadingIndicator" class="text-center p-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-600"></div>
+            <p class="mt-4 text-lg text-gray-600">Loading Pokémon details...</p>
+        </div>
+
+        <div id="pokemonDetails" class="hidden">
+            <!-- Top section with main Pokémon info -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                <div id="pokemonHeader" class="p-6 text-white">
+                    <div class="flex flex-col md:flex-row items-center">
+                        <img id="pokemonImage" src="" alt="" class="w-48 h-48 object-contain md:mr-8">
+                        <div class="text-center md:text-left mt-4 md:mt-0">
+                            <div class="flex items-center justify-center md:justify-start">
+                                <h2 id="pokemonName" class="text-3xl font-bold capitalize"></h2>
+                                <span id="pokemonId" class="ml-3 text-xl opacity-70"></span>
+                            </div>
+                            <div id="pokemonTypes" class="mt-2 flex flex-wrap justify-center md:justify-start gap-2">
+                            </div>
+                            <p id="pokemonDescription" class="mt-4 text-sm md:text-base"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-medium text-gray-700 mb-2">Height</h3>
+                        <p id="pokemonHeight" class="text-xl"></p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-medium text-gray-700 mb-2">Weight</h3>
+                        <p id="pokemonWeight" class="text-xl"></p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-medium text-gray-700 mb-2">Abilities</h3>
+                        <div id="pokemonAbilities"></div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-medium text-gray-700 mb-2">Base XP</h3>
+                        <p id="pokemonBaseXP" class="text-xl"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats section -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8 p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Base Stats</h3>
+                <div id="pokemonStats" class="space-y-4"></div>
+            </div>
+
+            <!-- Evolution chain -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8 p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Evolution Chain</h3>
+                <div id="evolutionChain" class="flex flex-wrap justify-center items-center gap-2 md:gap-4">
+                    <p id="evolutionLoading">Loading evolution data...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+            <h3 class="font-bold text-lg">Error</h3>
+            <p id="errorText"></p>
+            <div class="mt-4">
+                <a href="index.html" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Import Pokémon API module -->
+    <script type="module">
+        import { getPokemonDetails, getPokemonSpecies } from './pokemon.js';
+
+        // DOM Elements
+        const mainBody = document.getElementById('mainBody');
+        const mainHeader = document.getElementById('mainHeader');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const pokemonDetails = document.getElementById('pokemonDetails');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        // Store the current Pokémon type globally so it can be accessed by all functions
+        let currentType = 'default';
+
+        // Theme color mapping
+        const typeThemeColors = {
+            'default': {
+                header: 'bg-red-600',
+                body: 'bg-gray-100',
+                text: 'text-red-600',
+                border: 'border-red-600',
+                accent: 'bg-red-600',
+            },
+            'normal': {
+                header: 'bg-pokemon-normal',
+                body: 'bg-gray-50',
+                text: 'text-pokemon-normal',
+                border: 'border-pokemon-normal',
+                accent: 'bg-pokemon-normal',
+            },
+            'fire': {
+                header: 'bg-pokemon-fire',
+                body: 'bg-amber-50',
+                text: 'text-pokemon-fire',
+                border: 'border-pokemon-fire',
+                accent: 'bg-pokemon-fire',
+            },
+            'water': {
+                header: 'bg-pokemon-water',
+                body: 'bg-blue-50',
+                text: 'text-pokemon-water',
+                border: 'border-pokemon-water',
+                accent: 'bg-pokemon-water',
+            },
+            'grass': {
+                header: 'bg-pokemon-grass',
+                body: 'bg-green-50',
+                text: 'text-pokemon-grass',
+                border: 'border-pokemon-grass',
+                accent: 'bg-pokemon-grass',
+            },
+            'electric': {
+                header: 'bg-pokemon-electric',
+                body: 'bg-yellow-50',
+                text: 'text-pokemon-electric',
+                border: 'border-pokemon-electric',
+                accent: 'bg-pokemon-electric',
+            },
+            'ice': {
+                header: 'bg-pokemon-ice',
+                body: 'bg-cyan-50',
+                text: 'text-pokemon-ice',
+                border: 'border-pokemon-ice',
+                accent: 'bg-pokemon-ice',
+            },
+            'fighting': {
+                header: 'bg-pokemon-fighting',
+                body: 'bg-red-50',
+                text: 'text-pokemon-fighting',
+                border: 'border-pokemon-fighting',
+                accent: 'bg-pokemon-fighting',
+            },
+            'poison': {
+                header: 'bg-pokemon-poison',
+                body: 'bg-purple-50',
+                text: 'text-pokemon-poison',
+                border: 'border-pokemon-poison',
+                accent: 'bg-pokemon-poison',
+            },
+            'ground': {
+                header: 'bg-pokemon-ground',
+                body: 'bg-amber-50',
+                text: 'text-pokemon-ground',
+                border: 'border-pokemon-ground',
+                accent: 'bg-pokemon-ground',
+            },
+            'flying': {
+                header: 'bg-pokemon-flying',
+                body: 'bg-indigo-50',
+                text: 'text-pokemon-flying',
+                border: 'border-pokemon-flying',
+                accent: 'bg-pokemon-flying',
+            },
+            'psychic': {
+                header: 'bg-pokemon-psychic',
+                body: 'bg-pink-50',
+                text: 'text-pokemon-psychic',
+                border: 'border-pokemon-psychic',
+                accent: 'bg-pokemon-psychic',
+            },
+            'bug': {
+                header: 'bg-pokemon-bug',
+                body: 'bg-lime-50',
+                text: 'text-pokemon-bug',
+                border: 'border-pokemon-bug',
+                accent: 'bg-pokemon-bug',
+            },
+            'rock': {
+                header: 'bg-pokemon-rock',
+                body: 'bg-amber-50',
+                text: 'text-pokemon-rock',
+                border: 'border-pokemon-rock',
+                accent: 'bg-pokemon-rock',
+            },
+            'ghost': {
+                header: 'bg-pokemon-ghost',
+                body: 'bg-indigo-50',
+                text: 'text-pokemon-ghost',
+                border: 'border-pokemon-ghost',
+                accent: 'bg-pokemon-ghost',
+            },
+            'dark': {
+                header: 'bg-pokemon-dark',
+                body: 'bg-neutral-100',
+                text: 'text-pokemon-dark',
+                border: 'border-pokemon-dark',
+                accent: 'bg-pokemon-dark',
+            },
+            'dragon': {
+                header: 'bg-pokemon-dragon',
+                body: 'bg-violet-50',
+                text: 'text-pokemon-dragon',
+                border: 'border-pokemon-dragon',
+                accent: 'bg-pokemon-dragon',
+            },
+            'steel': {
+                header: 'bg-pokemon-steel',
+                body: 'bg-slate-50',
+                text: 'text-pokemon-steel',
+                border: 'border-pokemon-steel',
+                accent: 'bg-pokemon-steel',
+            },
+            'fairy': {
+                header: 'bg-pokemon-fairy',
+                body: 'bg-pink-50',
+                text: 'text-pokemon-fairy',
+                border: 'border-pokemon-fairy',
+                accent: 'bg-pokemon-fairy',
+            }
+        };
+
+        async function fetchEvolutionChain(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch evolution chain: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching evolution chain:', error);
+                throw error;
+            }
+        }
+
+        async function fetchPokemonForEvolution(speciesName) {
+            try {
+                return await getPokemonDetails(speciesName);
+            } catch (error) {
+                console.error(`Error fetching pokemon details for ${speciesName}:`, error);
+                // Return basic data to avoid breaking the chain
+                return { name: speciesName, id: '?' };
+            }
+        }
+
+        function renderEvolutionChain(evolutionData) {
+            const evolutionChain = document.getElementById('evolutionChain');
+            evolutionChain.innerHTML = '';
+
+            // Process and render the evolution chain recursively
+            async function processEvolutionChain(evolutionData) {
+                let chain = evolutionData.chain;
+                let evolutionArray = [];
+
+                while (chain) {
+                    const speciesName = chain.species.name;
+                    const pokemon = await fetchPokemonForEvolution(speciesName);
+
+                    evolutionArray.push({
+                        name: pokemon.name,
+                        id: pokemon.id,
+                        imageUrl: pokemon.sprites?.other['official-artwork'].front_default || pokemon.sprites?.front_default,
+                        types: pokemon.types || []
+                    });
+
+                    // If there's more than one evolution, we'd need a more complex UI
+                    // For simplicity, we'll just take the first evolution path
+                    if (chain.evolves_to.length > 0) {
+                        chain = chain.evolves_to[0];
+                    } else {
+                        break;
+                    }
+                }
+
+                // Render the evolution chain
+                evolutionArray.forEach((pokemon, index) => {
+                    // Create the Pokemon card
+                    const card = document.createElement('div');
+                    card.className = 'flex flex-col items-center';
+
+                    const imageWrap = document.createElement('div');
+                    imageWrap.className = 'bg-gray-100 rounded-full p-4 mb-2 w-32 h-32 flex items-center justify-center';
+
+                    const image = document.createElement('img');
+                    image.src = pokemon.imageUrl || '';
+                    image.alt = pokemon.name;
+                    image.className = 'w-24 h-24 object-contain';
+
+                    imageWrap.appendChild(image);
+
+                    const name = document.createElement('p');
+                    name.className = 'capitalize font-medium';
+                    name.textContent = pokemon.name;
+
+                    const id = document.createElement('p');
+                    id.className = 'text-sm text-gray-500';
+                    id.textContent = `#${String(pokemon.id).padStart(3, '0')}`;
+
+                    card.appendChild(imageWrap);
+                    card.appendChild(name);
+                    card.appendChild(id);
+
+                    // Make the card clickable
+                    card.classList.add('cursor-pointer', 'transform', 'hover:scale-105', 'transition');
+                    card.addEventListener('click', () => {
+                        window.location.href = `pokemon-details.html?id=${pokemon.id}`;
+                    });
+
+                    // Add the card to the evolution chain
+                    evolutionChain.appendChild(card);
+
+                    // Add arrow between evolutions
+                    if (index < evolutionArray.length - 1) {
+                        const arrow = document.createElement('div');
+                        // Use the currentType variable that's now globally defined
+                        arrow.className = `evolution-arrow text-pokemon-${currentType}`;
+                        evolutionChain.appendChild(arrow);
+                    }
+                });
+            }
+
+            processEvolutionChain(evolutionData).catch(error => {
+                evolutionChain.innerHTML = `<p class="text-red-600">Error loading evolution chain: ${error.message}</p>`;
+            });
+        }
+
+        function setTheme(type) {
+            const themeColors = typeThemeColors[type] || typeThemeColors['default'];
+
+            // Set header background
+            Object.values(typeThemeColors).forEach(colors => {
+                mainHeader.classList.remove(colors.header);
+            });
+            mainHeader.classList.add(themeColors.header);
+
+            // Set body background
+            Object.values(typeThemeColors).forEach(colors => {
+                mainBody.classList.remove(colors.body);
+            });
+            mainBody.classList.add(themeColors.body);
+
+            // Set pokemon header background
+            const pokemonHeader = document.getElementById('pokemonHeader');
+            if (pokemonHeader) {
+                Object.values(typeThemeColors).forEach(colors => {
+                    pokemonHeader.classList.remove(colors.header);
+                });
+                pokemonHeader.classList.add(themeColors.header);
+            }
+
+            // Update stats bars
+            const statBars = document.querySelectorAll('.stat-bar');
+            if (statBars.length > 0) {
+                Object.values(typeThemeColors).forEach(colors => {
+                    statBars.forEach(bar => {
+                        bar.classList.remove(colors.accent);
+                    });
+                });
+                statBars.forEach(bar => {
+                    bar.classList.add(themeColors.accent);
+                });
+            }
+        }
+
+        function getTypeColor(type) {
+            return type;
+        }
+
+        async function loadPokemonDetails() {
+            const params = new URLSearchParams(window.location.search);
+            const pokemonId = params.get('id');
+
+            if (!pokemonId) {
+                showError('No Pokémon ID specified. Please return to the home page and select a Pokémon.');
+                return;
+            }
+
+            try {
+                // Fetch Pokémon details and species info
+                const [pokemon, species] = await Promise.all([
+                    getPokemonDetails(pokemonId),
+                    getPokemonSpecies(pokemonId)
+                ]);
+
+                // Set the theme based on the primary type
+                currentType = pokemon.types[0].type.name;
+                setTheme(currentType);
+
+                // Set page title
+                document.title = `${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} | Pokémon Explorer`;
+
+                // Set basic info
+                document.getElementById('pokemonName').textContent = pokemon.name;
+                document.getElementById('pokemonId').textContent = `#${String(pokemon.id).padStart(3, '0')}`;
+                document.getElementById('pokemonImage').src = pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default;
+                document.getElementById('pokemonImage').alt = pokemon.name;
+
+                // Set types
+                const typesContainer = document.getElementById('pokemonTypes');
+                pokemon.types.forEach(typeInfo => {
+                    const type = document.createElement('span');
+                    type.className = `inline-block px-3 py-1 text-sm rounded-full text-white bg-pokemon-${typeInfo.type.name}`;
+                    type.textContent = typeInfo.type.name;
+                    typesContainer.appendChild(type);
+                });
+
+                // Set description (flavor text)
+                const flavorText = species.flavor_text_entries.find(entry => entry.language.name === 'en')?.flavor_text.replace(/\f/g, ' ') || 'No description available.';
+                document.getElementById('pokemonDescription').textContent = flavorText;
+
+                // Set physical characteristics
+                document.getElementById('pokemonHeight').textContent = `${(pokemon.height / 10).toFixed(1)} m`;
+                document.getElementById('pokemonWeight').textContent = `${(pokemon.weight / 10).toFixed(1)} kg`;
+                document.getElementById('pokemonBaseXP').textContent = `${pokemon.base_experience || 'Unknown'}`;
+
+                // Set abilities
+                const abilitiesContainer = document.getElementById('pokemonAbilities');
+                pokemon.abilities.forEach(abilityInfo => {
+                    const ability = document.createElement('div');
+                    ability.className = 'mb-1 last:mb-0';
+
+                    const abilityText = document.createElement('span');
+                    abilityText.className = 'capitalize';
+                    abilityText.textContent = abilityInfo.ability.name.replace('-', ' ');
+                    ability.appendChild(abilityText);
+
+                    if (abilityInfo.is_hidden) {
+                        const hiddenBadge = document.createElement('span');
+                        hiddenBadge.className = 'ml-2 text-xs bg-gray-200 px-1 rounded';
+                        hiddenBadge.textContent = 'Hidden';
+                        ability.appendChild(hiddenBadge);
+                    }
+
+                    abilitiesContainer.appendChild(ability);
+                });
+
+                // Set stats
+                const statsContainer = document.getElementById('pokemonStats');
+                pokemon.stats.forEach(statInfo => {
+                    const statName = statInfo.stat.name.replace('-', ' ');
+                    const statValue = statInfo.base_stat;
+                    const percentage = Math.min(100, (statValue / 255) * 100);
+
+                    const statBar = document.createElement('div');
+                    statBar.innerHTML = `
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="capitalize font-medium">${statName}</span>
+                            <span>${statValue}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="stat-bar h-3 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    `;
+
+                    statsContainer.appendChild(statBar);
+                });
+
+                // Fetch and display evolution chain
+                if (species.evolution_chain) {
+                    try {
+                        const evolutionData = await fetchEvolutionChain(species.evolution_chain.url);
+                        renderEvolutionChain(evolutionData);
+                    } catch (error) {
+                        document.getElementById('evolutionChain').innerHTML = `<p class="text-red-600">Error loading evolution chain: ${error.message}</p>`;
+                    }
+                } else {
+                    document.getElementById('evolutionChain').innerHTML = `<p>No evolution data available for this Pokémon.</p>`;
+                }
+
+                // Re-apply the theme to ensure all elements have the correct colors
+                setTheme(currentType);
+
+                // Show details and hide loading indicator
+                loadingIndicator.classList.add('hidden');
+                pokemonDetails.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error loading Pokémon details:', error);
+                showError(`Failed to load Pokémon details: ${error.message}`);
+            }
+        }
+
+        function showError(message) {
+            loadingIndicator.classList.add('hidden');
+            pokemonDetails.classList.add('hidden');
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', loadPokemonDetails);
+    </script>
+</body>
+
+</html>
